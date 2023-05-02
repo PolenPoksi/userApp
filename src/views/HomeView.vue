@@ -4,7 +4,7 @@ import IconEditUser from "../components/icons/IconEditUser.vue"
 import IconDeleteUser from "../components/icons/IconDeleteUser.vue"
 import { reactive, ref } from 'vue'
 import useVuelidate from '@vuelidate/core'
-import { required, minLength, maxLength, email, helpers, decimal } from "@vuelidate/validators"
+import { required, minLength, maxLength, email, decimal, numeric, helpers } from "@vuelidate/validators"
 import VueGoogleAutocomplete from 'vue-google-autocomplete';
 
 const users = ref()
@@ -19,15 +19,16 @@ function showEditModal() {
     show.value = false
     isEditing.value = false
     userData.value = null
-    formData.address = ""
-    formData.name = ""
-    formData.username = ""
-    formData.city = ""
-    formData.address = ""
-    formData.zipcode = ""
-    formData.latitude = ""
-    formData.email = ""
-    formData.longitude = ""
+    // formData.value = initialFormData;
+    formData.value.address = ""
+    formData.value.name = ""
+    formData.value.username = ""
+    formData.value.city = ""
+    formData.value.address = ""
+    formData.value.zipcode = ""
+    formData.value.latitude = ""
+    formData.value.email = ""
+    formData.value.longitude = ""
   }
   else
     show.value = true;
@@ -67,15 +68,15 @@ const getUserById = async (id: string) => {
   }
   else {
     userData.value = data
-    formData.name = data.name || ''
-    formData.username = data.username || ''
-    formData.email = data.email || ''
-    formData.phone = data.phone || ''
-    formData.address = data.address?.street || ''
-    formData.city = data.address?.city || ''
-    formData.zipcode = data.address?.zipcode || ''
-    formData.latitude = data.address?.geo?.lat || ''
-    formData.longitude = data.address?.geo?.lng || ''
+    formData.value.name = data.name || ''
+    formData.value.username = data.username || ''
+    formData.value.email = data.email || ''
+    formData.value.phone = data.phone || ''
+    formData.value.address = data.address?.street || ''
+    formData.value.city = data.address?.city || ''
+    formData.value.zipcode = data.address?.zipcode || ''
+    formData.value.latitude = data.address?.geo?.lat || ''
+    formData.value.longitude = data.address?.geo?.lng || ''
     isEditing.value = true
     userId.value = data?.id
     showEditModal()
@@ -95,17 +96,16 @@ const initialFormData = {
   longitude: '',
 }
 
-let formData = reactive(initialFormData);
+let formData = ref(initialFormData);
 
 
 // Form Validation
-
 
 const rules = {
   name: { required, minLength: minLength(4), maxLength: maxLength(20) },
   username: { required, minLength: minLength(3), maxLength: maxLength(15) },
   email: { required, email },
-  phone: { required },
+  phone: { required, numeric, minLength: minLength(8), maxLength: maxLength(16) },
   address: { required },
   city: { required },
   zipcode: { required, minLength: minLength(4), maxLength: maxLength(10) },
@@ -119,6 +119,7 @@ const v$ = useVuelidate(rules, formData)
 // Handle Submit Form
 
 const handleSubmit = async () => {
+  console.log(formData)
   const validationResult = await v$.value.$validate();
   if (validationResult) {
     if (!isEditing.value) {
@@ -131,8 +132,8 @@ const handleSubmit = async () => {
           },
         });
         const data = await response.json();
-        alert('User successfully created');
         showEditModal();
+        alert('User successfully created');
         isEditing.value = false
         v$.value.$reset()
       } catch (error) {
@@ -152,11 +153,11 @@ const handleSubmit = async () => {
         const data = await response.json();
         userId.value = null
         userData.value = null
-        alert('User successfully edited');
         showEditModal();
-        isEditing.value = false;
-        formData = initialFormData
+        alert('User successfully edited');
+        formData.value = initialFormData
         v$.value.$reset()
+        isEditing.value = false;
       } catch (error) {
         console.error(error);
         alert('Failed to edit user')
@@ -166,7 +167,7 @@ const handleSubmit = async () => {
   else {
     userId.value = null
     userData.value = null
-    alert(`${v$}Form not submitted. Please fix errors.`);
+    alert(`Form not submitted. Please fix errors.`);
   }
 };
 
@@ -181,7 +182,6 @@ const deleteUser = async (id: any) => {
     if (response.ok) {
       showDelete.value = false
       fetchData();
-      alert("The user was deleted succesfully")
       return true;
     } else {
       throw new Error('Delete User failed');
@@ -195,16 +195,16 @@ const deleteUser = async (id: any) => {
 
 // Address Autocomplete
 
-async function getGeoData(this: any) {
-  console.log("is this called or what")
-  const place = await this.$refs.autocomplete.getPlace();
-  formData.address = place.formatted_address;
-  formData.latitude = place.geometry.location.lat();
-  formData.longitude = place.geometry.location.lng();
-  formData.city = place.city;
-  formData.zipcode = place.zipcode;
-  console.log(place)
-}
+// async function getGeoData(this: any) {
+//   console.log("is this called or what")
+//   const place = await this.$refs.autocomplete.getPlace();
+//   formData.address = place.formatted_address;
+//   formData.latitude = place.geometry.location.lat();
+//   formData.longitude = place.geometry.location.lng();
+//   formData.city = place.city;
+//   formData.zipcode = place.zipcode;
+//   console.log(place)
+// }
 </script>
 
 <template>
