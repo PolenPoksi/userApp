@@ -104,7 +104,7 @@ const rules = {
   name: { required, minLength: minLength(4), maxLength: maxLength(20) },
   username: { required, minLength: minLength(3), maxLength: maxLength(15) },
   email: { required, email },
-  phone: { required, phoneValidator },
+  phone: { required },
   address: { required },
   city: { required },
   zipcode: { required, minLength: minLength(4), maxLength: maxLength(10) },
