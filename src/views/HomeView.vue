@@ -18,7 +18,7 @@ function showEditModal() {
   if (show.value == true) {
     show.value = false
     isEditing.value = false
-    userData.value = false
+    userData.value = null
     formData.address = ""
     formData.name = ""
     formData.username = ""
@@ -83,7 +83,7 @@ const getUserById = async (id: string) => {
   }
 }
 
-const formData = reactive({
+const initialFormData = {
   name: '',
   username: '',
   email: '',
@@ -93,12 +93,13 @@ const formData = reactive({
   zipcode: '',
   latitude: '',
   longitude: '',
-});
+}
+
+let formData = reactive(initialFormData);
 
 
 // Form Validation
 
-const phoneValidator = (value: any) => !helpers.req(value) || value.includes('-+1234567890')
 
 const rules = {
   name: { required, minLength: minLength(4), maxLength: maxLength(20) },
@@ -133,6 +134,7 @@ const handleSubmit = async () => {
         alert('User successfully created');
         showEditModal();
         isEditing.value = false
+        v$.value.$reset()
       } catch (error) {
         console.error(error);
         alert('Failed to create user');
@@ -153,15 +155,8 @@ const handleSubmit = async () => {
         alert('User successfully edited');
         showEditModal();
         isEditing.value = false;
-        formData.name = '';
-        formData.username = '';
-        formData.email = '';
-        formData.phone = '';
-        formData.address = '';
-        formData.city = '';
-        formData.zipcode = '';
-        formData.latitude = '';
-        formData.longitude = '';
+        formData = initialFormData
+        v$.value.$reset()
       } catch (error) {
         console.error(error);
         alert('Failed to edit user')
@@ -171,7 +166,7 @@ const handleSubmit = async () => {
   else {
     userId.value = null
     userData.value = null
-    alert('Form not submitted. Please fix errors.');
+    alert(`${v$}Form not submitted. Please fix errors.`);
   }
 };
 
@@ -196,6 +191,9 @@ const deleteUser = async (id: any) => {
     return false;
   }
 };
+
+
+// Address Autocomplete
 
 async function getGeoData(this: any) {
   console.log("is this called or what")
@@ -263,35 +261,39 @@ async function getGeoData(this: any) {
                   <!-- Name -->
                   <div class="formField">
                     <label for="name"> Enter Full Name</label>
-                    <input v-model="formData.name" type="text" class="input" id="name" placeholder="Full Name"
-                      autocomplete="name" />
-                    <span v-for="error in v$.name.$errors" :key="error.$uid" class="errorMessage"> {{ error.$message
-                    }}
+                    <input v-model="formData.name" @blur="v$.name.$touch()" type="text" class="input" id="name"
+                      placeholder="Full Name" autocomplete="name" />
+                    <span v-if="v$.name.$dirty" v-for="error in v$.name.$errors" :key="error.$uid" class="errorMessage">
+                      {{ error.$message
+                      }}
                     </span>
                   </div>
                   <!-- Username -->
                   <div class="formField">
                     <label for="username"> Enter Username</label>
-                    <input v-model="formData.username" type="text" class="input" placeholder="Username" id="username"
-                      autocomplete="username" />
-                    <span v-for="error in v$.username.$errors" :key="error.$uid" class="errorMessage"> {{ error.$message
-                    }} </span>
+                    <input v-model="formData.username" @blur="v$.username.$touch()" type="text" class="input"
+                      placeholder="Username" id="username" autocomplete="username" />
+                    <span v-if="v$.username.$dirty" v-for="error in v$.username.$errors" :key="error.$uid"
+                      class="errorMessage"> {{ error.$message
+                      }} </span>
                   </div>
                   <!-- Email -->
                   <div class="formField">
                     <label for="email">Enter Email</label>
-                    <input v-model="formData.email" required type="email" class="input" placeholder="Email" id="email"
-                      autocomplete="email" />
-                    <span v-for="error in v$.email.$errors" :key="error.$uid" class="errorMessage"> {{ error.$message }}
+                    <input v-model="formData.email" @blur="v$.email.$touch()" required type="email" class="input"
+                      placeholder="Email" id="email" autocomplete="email" />
+                    <span v-if="v$.email.$dirty" v-for="error in v$.email.$errors" :key="error.$uid" class="errorMessage">
+                      {{ error.$message }}
                     </span>
                   </div>
                   <!-- Phone Number -->
                   <div class="formField">
                     <label for="phone">Enter Phone Number</label>
-                    <input v-model="formData.phone" class="input" placeholder="Phone Number" id="phone"
-                      autocomplete="phone" />
-                    <span v-for="error in v$.phone.$errors" :key="error.$uid" class="errorMessage"> {{
-                      error.$message }} </span>
+                    <input v-model="formData.phone" @blur="v$.phone.$touch()" class="input" placeholder="Phone Number"
+                      id="phone" autocomplete="phone" />
+                    <span v-if="v$.phone.$dirty" v-for="error in v$.phone.$errors" :key="error.$uid" class="errorMessage">
+                      {{
+                        error.$message }} </span>
                   </div>
                 </div>
                 <div class="col-7">
@@ -304,25 +306,30 @@ async function getGeoData(this: any) {
                         <label for="uselocation" class="checkboxLabel"> Use Google Location</label>
                       </div>
                     </div>
-                    <vue-google-autocomplete id="location-autocomplete" @place_changed="getGeoData"
-                      v-model="formData.address" types="geocode" placeholder="Enter your address" class="input" />
-                    <span v-for="error in v$.address.$errors" :key="error.$uid" class="errorMessage"> {{ error.$message }}
+                    <!-- <vue-google-autocomplete id="location-autocomplete" @place_changed="getGeoData"
+                      v-model="formData.address" types="geocode" placeholder="Enter your address" class="input" /> -->
+                    <input v-model="formData.address" @blur="v$.address.$touch()" type="text" class="input"
+                      placeholder="Address" id="address" autocomplete="address" />
+                    <span v-if="v$.address.$dirty" v-for="error in v$.address.$errors" :key="error.$uid"
+                      class="errorMessage"> {{ error.$message }}
                     </span>
                   </div>
                   <!-- City-->
                   <div class="formField">
                     <label for="city">Enter City</label>
-                    <input v-model="formData.city" type="text" class="input" placeholder="City" id="city"
-                      autocomplete="city" />
-                    <span v-for="error in v$.city.$errors" :key="error.$uid" class="errorMessage"> {{ error.$message }}
+                    <input v-model="formData.city" @blur="v$.city.$touch()" type="text" class="input" placeholder="City"
+                      id="city" autocomplete="city" />
+                    <span v-if="v$.city.$dirty" v-for="error in v$.city.$errors" :key="error.$uid" class="errorMessage">
+                      {{ error.$message }}
                     </span>
                   </div>
                   <!-- Zip Code-->
                   <div class="formField">
                     <label for="zipcode">Enter Zip Code</label>
-                    <input v-model="formData.zipcode" class="input" placeholder="Zip Code" id="zipcode"
-                      autocomplete="zipcode" />
-                    <span v-for="error in v$.zipcode.$errors" :key="error.$uid" class="errorMessage"> {{ error.$message }}
+                    <input v-model="formData.zipcode" @blur="v$.zipcode.$touch()" class="input" placeholder="Zip Code"
+                      id="zipcode" autocomplete="zipcode" />
+                    <span v-if="v$.zipcode.$dirty" v-for="error in v$.zipcode.$errors" :key="error.$uid"
+                      class="errorMessage"> {{ error.$message }}
                     </span>
                   </div>
                   <div class="row">
@@ -330,20 +337,22 @@ async function getGeoData(this: any) {
                       <!-- Latitude-->
                       <div class="formField" v-if="checked">
                         <label for="latitude">Enter Latitude</label>
-                        <input v-model="formData.latitude" class="input" placeholder="Latitude" autocomplete="latitude"
-                          id="latitude" />
-                        <span v-for="error in v$.latitude.$errors" :key="error.$uid" class="errorMessage"> {{
-                          error.$message }} </span>
+                        <input v-model="formData.latitude" @blur="v$.latitude.$touch()" class="input"
+                          placeholder="Latitude" autocomplete="latitude" id="latitude" />
+                        <span v-if="v$.latitude.$dirty" v-for="error in v$.latitude.$errors" :key="error.$uid"
+                          class="errorMessage"> {{
+                            error.$message }} </span>
                       </div>
                     </div>
                     <div class="col-6">
                       <!-- Longitude-->
                       <div class="formField" v-if="checked">
                         <label for="longitude">Enter Longitude</label>
-                        <input v-model="formData.longitude" class="input" placeholder="Longitude" autocomplete="longitude"
-                          id="longitude" />
-                        <span v-for="error in v$.longitude.$errors" :key="error.$uid" class="errorMessage"> {{
-                          error.$message }} </span>
+                        <input v-model="formData.longitude" @blur="v$.longitude.$touch()" class="input"
+                          placeholder="Longitude" autocomplete="longitude" id="longitude" />
+                        <span v-if="v$.longitude.$dirty" v-for="error in v$.longitude.$errors" :key="error.$uid"
+                          class="errorMessage"> {{
+                            error.$message }} </span>
                       </div>
                     </div>
                   </div>
