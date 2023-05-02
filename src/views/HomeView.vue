@@ -17,6 +17,16 @@ function showEditModal() {
   if (show.value == true) {
     show.value = false
     isEditing.value = false
+    userData.value = false
+    formData.address = ""
+    formData.name = ""
+    formData.username = ""
+    formData.city = ""
+    formData.address = ""
+    formData.zipcode = ""
+    formData.latitude = ""
+    formData.email = ""
+    formData.longitude = ""
   }
   else
     show.value = true;
@@ -93,10 +103,10 @@ const rules = {
   name: { required, minLength: minLength(4), maxLength: maxLength(20) },
   username: { required, minLength: minLength(3), maxLength: maxLength(15) },
   email: { required, email },
-  phone: { required, phoneValidator},
+  phone: { required, phoneValidator },
   address: { required },
   city: { required },
-  zipcode: { required , minLength: minLength(4), maxLength: maxLength(8)},
+  zipcode: { required, minLength: minLength(4), maxLength: maxLength(8) },
   latitude: { decimal },
   longitude: { decimal },
 }
@@ -173,6 +183,7 @@ const deleteUser = async (id: any) => {
       method: 'DELETE',
     });
     if (response.ok) {
+      showDelete.value = false
       fetchData();
       return true;
     } else {
