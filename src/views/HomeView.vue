@@ -4,7 +4,8 @@ import IconEditUser from "../components/icons/IconEditUser.vue"
 import IconDeleteUser from "../components/icons/IconDeleteUser.vue"
 import { reactive, ref } from 'vue'
 import useVuelidate from '@vuelidate/core'
-import { required, minLength, maxLength, email, helpers, decimal, numeric, alphaNum } from "@vuelidate/validators"
+import { required, minLength, maxLength, email, helpers, decimal } from "@vuelidate/validators"
+import VueGoogleAutocomplete from 'vue-google-autocomplete';
 
 const users = ref()
 const show = ref(false)
@@ -97,7 +98,7 @@ const formData = reactive({
 
 // Form Validation
 
-const phoneValidator = (value: any) => !helpers.req(value) || value.includes('0123456789') || value.includes('+')
+const phoneValidator = (value: any) => !helpers.req(value) || value.includes('-+1234567890')
 
 const rules = {
   name: { required, minLength: minLength(4), maxLength: maxLength(20) },
@@ -106,7 +107,7 @@ const rules = {
   phone: { required, phoneValidator },
   address: { required },
   city: { required },
-  zipcode: { required, minLength: minLength(4), maxLength: maxLength(8) },
+  zipcode: { required, minLength: minLength(4), maxLength: maxLength(10) },
   latitude: { decimal },
   longitude: { decimal },
 }
@@ -185,6 +186,7 @@ const deleteUser = async (id: any) => {
     if (response.ok) {
       showDelete.value = false
       fetchData();
+      alert("The user was deleted succesfully")
       return true;
     } else {
       throw new Error('Delete User failed');
@@ -195,6 +197,16 @@ const deleteUser = async (id: any) => {
   }
 };
 
+async function getGeoData(this: any) {
+  console.log("is this called or what")
+  const place = await this.$refs.autocomplete.getPlace();
+  formData.address = place.formatted_address;
+  formData.latitude = place.geometry.location.lat();
+  formData.longitude = place.geometry.location.lng();
+  formData.city = place.city;
+  formData.zipcode = place.zipcode;
+  console.log(place)
+}
 </script>
 
 <template>
@@ -292,8 +304,8 @@ const deleteUser = async (id: any) => {
                         <label for="uselocation" class="checkboxLabel"> Use Google Location</label>
                       </div>
                     </div>
-                    <input v-model="formData.address" type="text" class="input" placeholder="Address" id="address"
-                      autocomplete="address" />
+                    <vue-google-autocomplete id="location-autocomplete" @place_changed="getGeoData"
+                      v-model="formData.address" types="geocode" placeholder="Enter your address" class="input" />
                     <span v-for="error in v$.address.$errors" :key="error.$uid" class="errorMessage"> {{ error.$message }}
                     </span>
                   </div>
